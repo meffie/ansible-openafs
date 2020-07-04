@@ -8,6 +8,12 @@
     - "../vars/{{ ansible_os_family }}.yaml"
     - "../vars/defaults.yaml"
 
+- name: Remove loopback address for our hostname in /etc/hosts
+  lineinfile:
+    state: absent
+    path: /etc/hosts
+    regexp: '^127\.\d+\.\d+\.\d+\s.*{{ ansible_host }}'
+
 - name: Make local directory
   run_once: true
   delegate_to: localhost
