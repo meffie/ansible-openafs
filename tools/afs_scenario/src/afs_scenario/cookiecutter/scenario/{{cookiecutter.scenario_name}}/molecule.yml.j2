@@ -1,0 +1,96 @@
+---
+dependency:
+  name: galaxy
+[% if driver is defined %]
+driver:
+  name: [[ driver.name ]]
+  [% if driver.provider is defined %]
+  provider:
+    name: [[ driver.provider ]]
+  [% endif %]
+  [% if driver.options is defined %]
+  options:
+    [[ driver.options | to_nice_yaml | indent ]]
+  [%- endif %]
+[% endif %]
+[% if platforms is defined %]
+platforms:
+{%- for i in range(cookiecutter.num_instances | int) %}
+  - name: [[ platforms.instance_prefix ]]{{ cookiecutter.instance_name }}-{{ '%02d' % (i+1) }}
+    [% set image = platforms.images['{{ cookiecutter.os_name }}'] %]
+    [[ platforms.image_type ]]: [[ image.name ]]
+    [% if image.options is defined and image.options %]
+    [[ image.options | to_nice_yaml | indent ]]
+    [%- endif %]
+  {%- if cookiecutter.groups %}
+    groups:
+    {%- for group in cookiecutter.groups.split(',') %}
+      - {{ group }}
+    {%- endfor %}
+  {%- endif %}
+{%- endfor %}
+[% endif %]
+provisioner:
+  name: ansible
+  [% if driver is defined and driver.name == 'delegated' %]
+  playbooks:
+    cleanup: ../__drivers__/delegated/cleanup.yml
+    create: ../__drivers__/delegated/create.yml
+    destroy: ../__drivers__/delegated/destroy.yml
+    prepare: ../__drivers__/delegated/prepare.yml
+  [% endif %]
+  inventory:
+    group_vars:
+      all:
+        afs_cell: "{{ cookiecutter.cell }}"
+        afs_cell_files: "${MOLECULE_EPHEMERAL_DIRECTORY}"
+        afs_install_method: "{{ cookiecutter.install_method }}"
+      {%- if cookiecutter.install_method == 'scm' %}
+        afs_git_repo: "${AFS_GIT_REPO:-git://git.openafs.org/openafs.git}"
+        afs_git_version: "${AFS_GET_VERSION:-master}"
+      {%- endif %}
+      {%- if cookiecutter.install_method in ('packages', 'bdist', 'sdist') %}
+        afs_install_archive: "${AFS_INSTALL_ARCHIVE}"
+      {%- endif %}
+      {%- if cookiecutter.role_name == 'openafs_client' %}
+        {%- if cookiecutter.install_method in ('default', 'managed', 'packages') %}
+        afs_module_install_method: "{{ cookiecutter.module_install_method }}"
+        {%- endif %}
+      {%- endif %}
+      {%- if cookiecutter.role_name == 'openafs_server' %}
+        afs_csdb_file: "${MOLECULE_EPHEMERAL_DIRECTORY}/csdb.yaml"
+        afs_pseudo_partitions: ['a', 'b']
+        afs_service_keytab: "__shared__/files/example-aes.keytab')"
+      {%- endif %}
+verifier:
+  name: ansible
+scenario:
+  create_sequence:
+    - create
+    - prepare
+  check_sequence:
+    - cleanup
+    - destroy
+    - create
+    - prepare
+    - converge
+    - check
+    - destroy
+  converge_sequence:
+    - create
+    - prepare
+    - converge
+  destroy_sequence:
+    - cleanup
+    - destroy
+  test_sequence:
+    - cleanup
+    - destroy
+    - create
+    - prepare
+    - converge
+    - verify
+    {# - idempotence -#}
+    {# - side_effect -#}
+    - cleanup
+    - destroy

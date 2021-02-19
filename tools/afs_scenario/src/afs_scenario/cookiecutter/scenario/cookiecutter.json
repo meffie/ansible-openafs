@@ -1,0 +1,11 @@
+{
+    "scenario_name": "OVERRIDDEN",
+    "role_name": "OVERRIDDEN",
+    "instance_name": "OVERRIDDEN",
+    "num_instances": "OVERRIDDEN",
+    "os_name": "OVERRIDDEN",
+    "groups": "OVERRIDDEN",
+    "cell": "OVERRIDDEN",
+    "install_method": "OVERRIDDEN",
+    "module_install_method": "OVERRIDDEN"
+}

@@ -1,0 +1,8 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    {%- if cookiecutter.role_name %}
+    - import_role:
+        name: {{ cookiecutter.role_name }}
+    {%- endif %}
